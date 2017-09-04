@@ -12,19 +12,16 @@ Mat src, roiImage, dst;
 void detectLines(int, void*);
 void morhpologyLines(int, void*);
 int main(int argc, char** argv) {
-	src = imread("D:/gloomyfish/case2.png", IMREAD_GRAYSCALE);
+	src = imread("case/2.jpg", IMREAD_GRAYSCALE);
 	if (src.empty()) {
 		printf("could not load image...\n");
 		return -1;
 	}
-	namedWindow("input image", CV_WINDOW_AUTOSIZE);
-	imshow("input image", src);
-	namedWindow(output_lines, CV_WINDOW_AUTOSIZE);
-	Rect roi = Rect(10, 10, src.cols - 20, src.rows - 20);
+	//namedWindow(output_lines, WINDOW_KEEPRATIO);
+	Rect roi = Rect(10, 10, src.cols - 20, src.rows - 20);	//手动切除边缘部分
 	roiImage = src(roi);
-	imshow("ROI image", roiImage);
-	// createTrackbar("threshold:", output_lines, &threshold_value, max_count, detectLines);
-	// detectLines(0, 0);
+	//createTrackbar("threshold:", output_lines, &threshold_value, max_count, detectLines);
+	//detectLines(0, 0);
 	morhpologyLines(0, 0);
 
 	waitKey(0);
@@ -33,10 +30,10 @@ int main(int argc, char** argv) {
 
 void detectLines(int, void*) {
 	Canny(roiImage, dst, threshold_value, threshold_value * 2, 3, false);
-	//threshold(roiImage, dst, 0, 255, THRESH_BINARY | THRESH_OTSU);
-	vector<Vec4i> lines;
+	//threshold(roiImage, dst, 0, 255, THRESH_BINARY | THRESH_OTSU);	//阈值也不可以解决
+	vector<Vec4i> lines;	//线点
 	HoughLinesP(dst, lines, 1, CV_PI / 180.0, 30, 30.0, 0);
-	cvtColor(dst, dst, COLOR_GRAY2BGR);
+	cvtColor(dst, dst, COLOR_GRAY2BGR);		//GRAY2BGR干什么，为什么？ 绘制线出现颜色
 	for (size_t t = 0; t < lines.size(); t++) {
 		Vec4i ln = lines[t];
 		line(dst, Point(ln[0], ln[1]), Point(ln[2], ln[3]), Scalar(0, 0, 255), 2, 8, 0);
@@ -46,28 +43,25 @@ void detectLines(int, void*) {
 
 void morhpologyLines(int, void*) {
 	// binary image
-	Mat binaryImage, morhpImage;
-	threshold(roiImage, binaryImage, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);
-	imshow("binary", binaryImage);
+	Mat binaryImage, morhpImage_open, morhpImage_dilate;
+	threshold(roiImage, binaryImage, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);	//二值化取反
 
-	// morphology operation
-	Mat kernel = getStructuringElement(MORPH_RECT, Size(20, 1), Point(-1, -1));
-	morphologyEx(binaryImage, morhpImage, MORPH_OPEN, kernel, Point(-1, -1));
-	imshow("morphology result", morhpImage);
+	// morphology operation（腐蚀去字体）
+	Mat kernel = getStructuringElement(MORPH_RECT, Size(50, 1), Point(-1, -1));		//kernel大小尺寸
+	morphologyEx(binaryImage, morhpImage_open, MORPH_OPEN, kernel, Point(-1, -1));
 
-	// dilate image
-	kernel = getStructuringElement(MORPH_RECT, Size(3, 3), Point(-1, -1));
-	dilate(morhpImage, morhpImage, kernel);
-	imshow("morphology lines", morhpImage);
+	// dilate image（加强直线）
+	kernel = getStructuringElement(MORPH_RECT, Size(5, 5), Point(-1, -1));
+	dilate(morhpImage_open, morhpImage_dilate, kernel);
 
 	// hough lines
 	vector<Vec4i> lines;
-	HoughLinesP(morhpImage, lines, 1, CV_PI / 180.0, 30, 20.0, 0);
+	HoughLinesP(morhpImage_dilate, lines, 1, CV_PI / 180.0, 30, 250, 0);
 	Mat resultImage = roiImage.clone();
 	cvtColor(resultImage, resultImage, COLOR_GRAY2BGR);
 	for (size_t t = 0; t < lines.size(); t++) {
 		Vec4i ln = lines[t];
-		line(resultImage, Point(ln[0], ln[1]), Point(ln[2], ln[3]), Scalar(0, 0, 255), 2, 8, 0);
+		line(resultImage, Point(ln[0], ln[1]), Point(ln[2], ln[3]), Scalar(0, 0, 255), 4, 8, 0);
 	}
 	imshow(output_lines, resultImage);
 	return;

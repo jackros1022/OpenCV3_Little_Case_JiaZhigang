@@ -12,8 +12,9 @@ const char* output_win = "Contours Result";
 const char* roi_win = "Final Result";
 void FindROI(int, void*);
 void Check_Skew(int, void*);
+
 int main(int argc, char** argv) {
-	src = imread("D:/gloomyfish/case1r.png");
+	src = imread("case/4.jpg");
 	if (src.empty()) {
 		printf("could not load image...\n");
 		return -1;
@@ -22,9 +23,9 @@ int main(int argc, char** argv) {
 	imshow("input image", src);
 	namedWindow(output_win, CV_WINDOW_AUTOSIZE);
 	Check_Skew(0, 0);
-	// namedWindow(roi_win, CV_WINDOW_AUTOSIZE);
-	//createTrackbar("Threshold:", output_win, &threshold_value, max_level, FindROI);
-	// FindROI(0, 0);
+	namedWindow(roi_win, CV_WINDOW_AUTOSIZE);
+	createTrackbar("Threshold:", output_win, &threshold_value, max_level, FindROI);
+	FindROI(0, 0);
 
 	waitKey(0);
 	return 0;
@@ -44,7 +45,7 @@ void Check_Skew(int, void*) {
 	double degree = 0;
 	for (size_t t = 0; t < contours.size(); t++) {
 		RotatedRect minRect = minAreaRect(contours[t]);
-		degree = abs(minRect.angle);
+		degree = abs(minRect.angle);		//正负绝对值？
 		if (degree > 0) {
 			maxw = max(maxw, minRect.size.width);
 			maxh = max(maxh, minRect.size.height);
@@ -59,7 +60,7 @@ void Check_Skew(int, void*) {
 			minRect.points(pts);
 			Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
 			for (int i = 0; i < 4; i++) {
-				line(drawImg, pts[i], pts[(i + 1) % 4], color, 2, 8, 0);
+				line(drawImg, pts[i], pts[(i + 1) % 4], color, 2, 8, 0);	//对4
 			}
 		}
 	}
@@ -84,19 +85,20 @@ void FindROI(int, void*) {
 	vector<Vec4i> hireachy;
 	findContours(canny_output, contours, hireachy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	int minw = src.cols*0.75;
-	int minh = src.rows*0.75;
+	int minw = src.cols*0.55;
+	int minh = src.rows*0.55;
 	RNG rng(12345);
 	Mat drawImage = Mat::zeros(src.size(), CV_8UC3);
 	Rect bbox;
 	for (size_t t = 0; t < contours.size(); t++) {
-		RotatedRect minRect = minAreaRect(contours[t]);
+		RotatedRect minRect = minAreaRect(contours[t]);		//最小矩形面积
 		float degree = abs(minRect.angle);
 		if (minRect.size.width > minw && minRect.size.height > minh && minRect.size.width < (src.cols-5)) {
 			printf("current angle : %f\n", degree);
 			Point2f pts[4];
 			minRect.points(pts);
-			bbox = minRect.boundingRect();
+			//@bbox	returns the minimal (exact) floating point rectangle containing the rotated rectangle,
+			bbox = minRect.boundingRect();	 
 			Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
 			for (int i = 0; i < 4; i++) {
 				line(drawImage, pts[i], pts[(i + 1)%4], color, 2, 8, 0);
@@ -105,7 +107,7 @@ void FindROI(int, void*) {
 	}
 	imshow(output_win, drawImage);
 
-	if (bbox.width > 0 && bbox.height > 0) {
+	if (bbox.width > 0 && bbox.height > 0 && bbox.x > 0 && bbox.y > 0){
 		Mat roiImg = src(bbox);
 		imshow(roi_win, roiImg);
 	}

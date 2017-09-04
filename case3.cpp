@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 		// 面积过滤
 		double area = contourArea(contours[t]);
 		if (area < 100) continue;
-		// 横纵比过滤
+		// 横纵比过滤（若不使用呢？）
 		Rect rect = boundingRect(contours[t]);
 		float ratio = float(rect.width) / float(rect.height);
 		
@@ -60,19 +60,20 @@ int main(int argc, char** argv) {
 	imshow("Final Result", circleImage);
 
 	// detect circle
-	/*vector<Vec3f> myCircles;
-	Mat gray_result;
-	cvtColor(resultImage, gray_result, COLOR_BGR2GRAY);
-	HoughCircles(gray_result, myCircles, HOUGH_GRADIENT, 1, 7, 50, 20, 23, 100);
 
-	Mat circleImage = src.clone();
-	cvtColor(circleImage, circleImage, COLOR_GRAY2BGR);
-	for (int i = 0; i < myCircles.size(); i++) {
-		Vec3f circleInfo = myCircles[i];
-		circle(circleImage, Point(circleInfo[0], circleInfo[1]), circleInfo[2], Scalar(0, 0, 255), 1, 8, 0);
-	}
+	//vector<Vec3f> myCircles;
+	//Mat gray_result;
+	//cvtColor(resultImage, gray_result, COLOR_BGR2GRAY);
+	//HoughCircles(gray_result, myCircles, HOUGH_GRADIENT, 1, 7, 50, 20, 23, 100);
+
+	//Mat circleImage = src.clone();
+	//cvtColor(circleImage, circleImage, COLOR_GRAY2BGR);
+	//for (int i = 0; i < myCircles.size(); i++) {
+	//	Vec3f circleInfo = myCircles[i];
+	//	circle(circleImage, Point(circleInfo[0], circleInfo[1]), circleInfo[2], Scalar(0, 0, 255), 1, 8, 0);
+	//}
 	
-	*/
+
 	waitKey(0);
 	return 0;
 }
